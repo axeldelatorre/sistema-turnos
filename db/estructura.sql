@@ -10,7 +10,7 @@ CREATE TABLE recurso (
     tipo VARCHAR(50) NOT NULL,
     descripcion TEXT,
     activo BOOLEAN DEFAULT TRUE
-)
+);
 CREATE TABLE cita (
     id_cita INT PRIMARY KEY AUTO_INCREMENT,
     fecha DATE NOT NULL,
