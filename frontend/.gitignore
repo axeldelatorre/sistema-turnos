@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+# Archivos de configuración de entorno y seguridad
+.env
+db/conexion.php
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Ignorar archivos temporales y logs
+*.log
+*~
+*.bak
+
+# Ignorar directorios de sistemas operativos e IDEs
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Directorios y archivos generados automáticamente por dependencias
+/vendor/
+composer.lock
