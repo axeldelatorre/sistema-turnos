@@ -5,11 +5,13 @@ Tecnologías:
 
 PHP
 
-MySQL
+SupaBase
 
-JavaScript (Vanilla)
+React
 
-CSS3
+JavaScript
+
+Tailwind CSS v3.0
 
 Funcionalidades planeadas:
 
