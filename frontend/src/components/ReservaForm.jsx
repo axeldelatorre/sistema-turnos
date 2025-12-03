@@ -122,16 +122,16 @@ export function ReservaForm() {
         {/* Aca irán los inputs visuales */}
         {/* Selector de Recurso */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Selecciona el Profesional/Cancha</label>
-          <select 
+          <label className="block text-sm font-medium text-white-700">Selecciona el Profesional/Cancha</label>
+          <select
             name="recursoId" 
             onChange={handleChange} 
             required
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md text-white-700"
           >
-            <option value="">-- Seleccionar --</option>
+            <option value="" className='text-zinc-50'>-- Seleccionar --</option>
             {recursos.map((recurso) => (
-              <option key={recurso.id_recurso} value={recurso.id_recurso}>
+              <option key={recurso.id_recurso} value={recurso.id_recurso} className="bg-gray-800 text-white-700">
                 {recurso.nombre} ({recurso.tipo})
               </option>
             ))}
@@ -141,7 +141,7 @@ export function ReservaForm() {
         {/* Datos del Cliente */}
         <input 
           type="text" name="nombre" placeholder="Tu Nombre" required onChange={handleChange}
-          className="w-full p-2 border border-gray-300 rounded-md"
+          className="w-full p-2 border border-gray-300 rounded-md text-white-700"
         />
         <input 
           type="text" name="apellido" placeholder="Tu Apellido" required onChange={handleChange}
@@ -149,7 +149,7 @@ export function ReservaForm() {
         />
         <input 
           type="tel" name="telefono" placeholder="WhatsApp (Ej: 1112345678)" required onChange={handleChange}
-          className="w-full p-2 border border-gray-300 rounded-md"
+          className="w-full p-2 border border-gray-300 rounded-md text-white-700"
         />
 
         {/* Fecha y Hora */}
