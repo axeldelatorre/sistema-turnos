@@ -115,12 +115,10 @@ export function ReservaForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl">
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl items-center text-center">
       <h2 className="text-2xl font-bold mb-4 text-gray-800">Reservar Turno</h2>
       
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Aca irán los inputs visuales */}
-        {/* Selector de Recurso */}
         <div>
           <label className="block text-sm font-medium text-white-700">Selecciona el Profesional/Cancha</label>
           <select
@@ -148,26 +146,26 @@ export function ReservaForm() {
           className="w-full p-2 border border-gray-300 rounded-md"
         />
         <input 
-          type="tel" name="telefono" placeholder="WhatsApp (Ej: 1112345678)" required onChange={handleChange}
+          type="tel" name="telefono" placeholder="WhatsApp (Ej: 2974912345)" required onChange={handleChange}
           className="w-full p-2 border border-gray-300 rounded-md text-white-700"
         />
 
         {/* Fecha y Hora */}
-        <div className="flex gap-4">
+        <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl items-center text-center place-items-center flex gap-4">
           <div className="w-1/2">
             <label className="block text-sm">Fecha</label>
-            <input type="date" name="fecha" required onChange={handleChange} className="w-full p-2 border rounded-md"/>
+            <input type="date" name="fecha" required onChange={handleChange} className="w-full p-2 border rounded-md place-items-center"/>
           </div>
-          <div className="w-1/2">
+          <div className="w-1/2" items-center>
             <label className="block text-sm">Hora</label>
-            <input type="time" name="hora" required onChange={handleChange} className="w-full p-2 border rounded-md"/>
+            <input type="time" name="hora" required onChange={handleChange} className="w-full p-2 border rounded-md place-items-center"/>
           </div>
         </div>
 
         <button 
           type="submit" 
           disabled={loading}
-          className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition disabled:bg-gray-400"
+          className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition center"
         >
           {loading ? 'Procesando...' : 'Confirmar Reserva'}
         </button>
