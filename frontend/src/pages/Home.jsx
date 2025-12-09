@@ -1,37 +1,56 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Calendar, Clock, MapPin, Scissors, User } from "lucide-react";
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import { ReservaForm } from "../components/ReservaForm";
+import { Servicios } from "./Servicios";
 export function Home() {
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash) {
+      // Buscamos el elemento por su ID (quitando el #)
+      const element = document.getElementById(hash.replace("#", ""));
+      if (element) {
+        // Hacemos scroll suave hasta el elemento
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [hash]);
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
       {/* 1. NAVBAR / HEADER */}
       <nav className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-2">
-              <Scissors className="h-8 w-8 text-blue-600" />
-              <span className="font-bold text-xl tracking-tight">
-                Estilo & Corte
-              </span>
+            <Link to="/#inicio" className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Scissors className="h-8 w-8 text-blue-600" />
+                <span className="font-bold text-xl tracking-tight">
+                  Estilo & Corte
+                </span>
+              </div>
+            </Link>
+            <div className="flex gap-4 relative ">
+              <Link
+                to="/login"
+                className="px-4 py-2  bg-blue-600 text-white rounded-full hover:bg-blue-700 transition"
+              >
+                Soy el Dueño (Login)
+              </Link>
             </div>
-            <div className="flex gap-4 ">
-               {/* Usamos Link en lugar de a href para no recargar la web */}
-               <Link to="/login" className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition ">
-                 Soy el Dueño (Login)
-               </Link>
-             </div>
-            <div className="hidden md:flex space-x-8 text-sm font-medium">
+            <div className="hidden md:flex space-x-2 text-sm font-medium">
               <a
                 href="#inicio"
-                className="text-gray-500 hover:text-blue-600 transition"
+                className=" px-4 py-2 text-gray-500 hover:text-blue-600 transition border border-blue-600 rounded-full"
               >
                 Inicio
               </a>
-              <a
-                href="#servicios"
-                className="text-gray-500 hover:text-blue-600 transition"
-              >
-                Servicios
+              <a className=" px-4 py-2 text-gray-500 hover:text-blue-600 transition border border-blue-600 rounded-full">
+                <Link
+                  to="/servicios"
+                >
+                  Servicios
+                </Link>
               </a>
               <a
                 href="#reservar"
@@ -84,6 +103,7 @@ export function Home() {
             <p className="text-gray-600">
               Estilo tradicional con tijera y máquina, acabado con navaja.
             </p>
+            <Link to="/servicios" className="absolute inset-0 z-10" />
           </div>
           {/* Tarjeta 2 */}
           <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition border border-gray-100">
@@ -94,6 +114,7 @@ export function Home() {
             <p className="text-gray-600">
               Tratamiento con toalla caliente y aceites esenciales.
             </p>
+            {/* <Link to="/servicios" className="absolute inset-0 z-10" /> */}
           </div>
           {/* Tarjeta 3 */}
           <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition border border-gray-100">
@@ -104,6 +125,7 @@ export function Home() {
             <p className="text-gray-600">
               Corte + Barba + Masaje capilar. La experiencia total.
             </p>
+            <Link to="/servicios" className="absolute inset-0 z-10" />
           </div>
         </div>
       </section>
@@ -117,8 +139,6 @@ export function Home() {
               Selecciona el profesional y el horario que prefieras.
             </p>
           </div>
-
-          {/* AQUÍ RENDERIZAMOS TU FORMULARIO */}
           <ReservaForm />
         </div>
       </section>
