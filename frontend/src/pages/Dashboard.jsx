@@ -1,4 +1,5 @@
 // src/pages/Dashboard.jsx
+import {toast} from 'sonner';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient.js"; // Asegúrate de la ruta correcta
@@ -93,8 +94,9 @@ export function Dashboard() {
 
       // Quitamos el turno de la lista local
       setTurnos(turnos.filter((turno) => turno.id_cita !== id));
+      toast.success("Turno eliminado con éxito.");
     } catch (error) {
-      alert("Error eliminando: " + error.message);
+      toast.error("Error eliminando: " + error.message);
     }
   };
 

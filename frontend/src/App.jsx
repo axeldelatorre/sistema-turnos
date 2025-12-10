@@ -1,4 +1,5 @@
 // src/App.jsx
+import {Toaster} from 'sonner';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
@@ -8,6 +9,7 @@ import { Servicios } from './pages/Servicios';
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="bottom-right" richColors />
       <Routes>
         {/* Ruta Pública: La Landing Page */}
         <Route path="/" element={<Home />} />

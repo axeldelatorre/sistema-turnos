@@ -1,4 +1,5 @@
 // src/pages/Login.jsx
+import {toast} from 'sonner';
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
@@ -19,7 +20,7 @@ export function Login() {
     });
 
     if (error) {
-      alert("Error: " + error.message);
+    toast.error("Error de acceso", {description: error.message});
     } else {
       // Si el login es correcto, llévame al Dashboard
       navigate('/dashboard');

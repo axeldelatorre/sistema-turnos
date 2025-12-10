@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient.js";
 import { Calendar, Clock, User, Check } from "lucide-react";
@@ -85,7 +86,7 @@ export function ReservaForm() {
   // --- SUBMIT DEL FORMULARIO ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.hora) return alert("Por favor selecciona un horario.");
+    if (!formData.hora){ return toast.error("Por favor selecciona un horario.")};
     setLoading(true);
 
     try {
@@ -164,14 +165,14 @@ export function ReservaForm() {
           (err) => console.error("Fallo envío de email", err)
         );
 
-      alert("✅ ¡Turno reservado con éxito! Te hemos enviado un comprobante.");
+      toast.success("✅ ¡Turno reservado con éxito!",{description:"Te hemos enviado un comprobante a tu correo."});
 
       // Opcional: Limpiar formulario
       setLoading(false);
       fetchHorariosOcupados();
     } catch (error) {
       console.error(error); // Bueno para debug
-      alert("Error: " + error.message);
+      toast.error("Ocurrio un error al reservar.",{description: error.message});
       setLoading(false);
     }
   };
