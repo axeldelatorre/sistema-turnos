@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
 import { useState, useEffect } from "react";
-import { supabase } from "../supabaseClient.js";
+import { supabase } from "../lib/supabaseClient.js";
 import { Calendar, Clock, User, Check } from "lucide-react";
 import emailjs from "@emailjs/browser";
 

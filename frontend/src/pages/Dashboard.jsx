@@ -2,13 +2,16 @@
 import {toast} from 'sonner';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient.js"; // Asegúrate de la ruta correcta
+import { supabase } from "../lib/supabaseClient.js"; // Asegúrate de la ruta correcta
 import { LogOut, Calendar, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { AdminCalendar } from '../components/AdminCalendar.jsx';
+import { LayoutGrid, List } from 'lucide-react';
 
 export function Dashboard() {
   const navigate = useNavigate();
   const [turnos, setTurnos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [vista, setVista] = useState('tabla'); // 'tabla' o 'calendario'
 
   useEffect(() => {
     // 1. VERIFICAR SESIÓN
@@ -119,10 +122,42 @@ export function Dashboard() {
       <main className="max-w-7xl mx-auto p-6">
         <h2 className="text-2xl font-bold mb-6">Próximos Turnos</h2>
 
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Gestión de Turnos</h2>
+
+          {/* Botones para cambiar vista */}
+          <div className="bg-white p-1 rounded-lg shadow border flex">
+            <button
+              onClick={() => setVista("tabla")}
+              className={`p-2 rounded flex items-center gap-2 ${
+                vista === "tabla"
+                  ? "bg-blue-100 text-blue-600"
+                  : "text-gray-500"
+              }`}
+            >
+              <List size={20} /> Lista
+            </button>
+            <button
+              onClick={() => setVista("calendario")}
+              className={`p-2 rounded flex items-center gap-2 ${
+                vista === "calendario"
+                  ? "bg-blue-100 text-blue-600"
+                  : "text-gray-500"
+              }`}
+            >
+              <LayoutGrid size={20} /> Calendario
+            </button>
+          </div>
+        </div>
+
         {turnos.length === 0 ? (
           <p className="text-gray-500">No hay turnos registrados.</p>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <>
+            {vista === 'calendario' ? (
+              <AdminCalendar turnos={turnos} />
+            ) : (
+              <div className="bg-white rounded-lg shadow overflow-hidden">
             <table className="w-full text-left">
               <thead className="bg-gray-50 text-gray-700 uppercase text-xs">
                 <tr>
@@ -154,23 +189,23 @@ export function Dashboard() {
                     <td className="p-4">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold
-                        ${
+                          ${
                           turno.estado === "pendiente"
                             ? "bg-yellow-100 text-yellow-800"
                             : ""
                         }
                         ${
                           turno.estado === "confirmado"
-                            ? "bg-green-100 text-green-800"
-                            : ""
+                          ? "bg-green-100 text-green-800"
+                          : ""
                         }
-                      `}
+                        `}
                       >
                         {turno.estado}
                       </span>
                       {/* <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ...`}
-                      >
+                        >
                         {turno.estado}
                       </span> */}
                     </td>
@@ -179,25 +214,25 @@ export function Dashboard() {
                         {/* Botón Confirmar (Solo si está pendiente) */}
                         {turno.estado === "pendiente" && (
                           <button
-                            onClick={() =>
-                              handleUpdateStatus(turno.id_cita, "confirmado")
+                          onClick={() =>
+                            handleUpdateStatus(turno.id_cita, "confirmado")
                             }
                             className="text-green-600 hover:text-green-800"
                             title="Confirmar Turno"
-                          >
+                            >
                             <CheckCircle size={20} />
                           </button>
                         )}
 
                         {/* Botón Cancelar (Si no está cancelado) */}
-                        {turno.estado !== "cancelado" && (
+                        {turno.estado !== "cancelado" && turno.estado !== "confirmado" && (
                           <button
                             onClick={() =>
                               handleUpdateStatus(turno.id_cita, "cancelado")
                             }
                             className="text-yellow-600 hover:text-yellow-800"
                             title="Cancelar Turno"
-                          >
+                            >
                             <XCircle size={20} />
                           </button>
                         )}
@@ -207,7 +242,7 @@ export function Dashboard() {
                           onClick={() => handleDelete(turno.id_cita)}
                           className="text-red-600 hover:text-red-800"
                           title="Eliminar registro"
-                        >
+                          >
                           <Trash2 size={20} />
                         </button>
                       </div>
@@ -217,6 +252,8 @@ export function Dashboard() {
               </tbody>
             </table>
           </div>
+        )}
+          </>
         )}
       </main>
     </div>

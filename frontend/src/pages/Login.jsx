@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import {toast} from 'sonner';
 import { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
 import { Home } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';

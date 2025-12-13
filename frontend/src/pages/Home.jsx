@@ -33,9 +33,9 @@ export function Home() {
             <div className="flex gap-4 relative ">
               <Link
                 to="/login"
-                className="px-4 py-2  bg-blue-600 text-white rounded-full hover:bg-blue-700 transition"
+                className="px-6 py-4  bg-blue-600 text-white rounded-full hover:bg-blue-700 transition "
               >
-                Soy el Dueño (Login)
+                Soy el Dueño
               </Link>
             </div>
             <div className="hidden md:flex space-x-2 text-sm font-medium">
@@ -98,12 +98,12 @@ export function Home() {
           <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition border border-gray-100">
             <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mb-4 text-blue-600">
               <Scissors size={24} />
+            {/* <Link to="/servicios" className=" absolute inset-0 z-10" /> */}
             </div>
             <h3 className="font-bold text-xl mb-2">Corte Clásico</h3>
             <p className="text-gray-600">
               Estilo tradicional con tijera y máquina, acabado con navaja.
             </p>
-            <Link to="/servicios" className="absolute inset-0 z-10" />
           </div>
           {/* Tarjeta 2 */}
           <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition border border-gray-100">
@@ -112,9 +112,9 @@ export function Home() {
             </div>
             <h3 className="font-bold text-xl mb-2">Barba & Perfilado</h3>
             <p className="text-gray-600">
+            {/* <Link to="/servicios"/> */}
               Tratamiento con toalla caliente y aceites esenciales.
             </p>
-            {/* <Link to="/servicios" className="absolute inset-0 z-10" /> */}
           </div>
           {/* Tarjeta 3 */}
           <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition border border-gray-100">
@@ -125,7 +125,7 @@ export function Home() {
             <p className="text-gray-600">
               Corte + Barba + Masaje capilar. La experiencia total.
             </p>
-            <Link to="/servicios" className="absolute inset-0 z-10" />
+            {/* <Link to="/servicios" className="absolute inset-0 z-10" /> */}
           </div>
         </div>
       </section>

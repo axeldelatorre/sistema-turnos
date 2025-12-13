@@ -21,6 +21,6 @@ Funcionalidades planeadas:
 
 [✅] Prevención de turnos duplicados
 
-[ ] Envio de comprobante de reserva
+[✅] Envio de comprobante de reserva
 
 [ ] Pagos online
