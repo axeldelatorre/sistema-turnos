@@ -1,42 +1,43 @@
 // src/pages/Dashboard.jsx
-import {toast} from 'sonner';
+import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient.js"; // Asegúrate de la ruta correcta
 import { LogOut, Calendar, CheckCircle, XCircle, Trash2 } from "lucide-react";
-import { AdminCalendar } from '../components/AdminCalendar.jsx';
-import { LayoutGrid, List } from 'lucide-react';
+import { AdminCalendar } from "../components/AdminCalendar.jsx";
+import { LayoutGrid, List, Settings } from "lucide-react";
+import { AdminConfig } from "../components/AdminConfig.jsx";
 
 export function Dashboard() {
-  const navigate = useNavigate();
-  const [turnos, setTurnos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [vista, setVista] = useState('tabla'); // 'tabla' o 'calendario'
+    const navigate = useNavigate();
+    const [turnos, setTurnos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [vista, setVista] = useState("tabla"); // 'tabla' o 'calendario'
 
-  useEffect(() => {
-    // 1. VERIFICAR SESIÓN
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login"); // Si no hay sesión, fuera de aquí
-      } else {
-        fetchTurnos(); // Si hay sesión, carga los datos
-      }
-    };
+    useEffect(() => {
+        // 1. VERIFICAR SESIÓN
+        const checkSession = async () => {
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+            if (!session) {
+                navigate("/login"); // Si no hay sesión, fuera de aquí
+            } else {
+                fetchTurnos(); // Si hay sesión, carga los datos
+            }
+        };
 
-    checkSession();
-  }, [navigate]);
+        checkSession();
+    }, [navigate]);
 
-  // 2. CARGAR TURNOS
-  const fetchTurnos = async () => {
-    try {
-      // Traemos citas y "unimos" (join) con la tabla cliente y recurso para saber nombres
-      const { data, error } = await supabase
-        .from("cita")
-        .select(
-          `
+    // 2. CARGAR TURNOS
+    const fetchTurnos = async () => {
+        try {
+            // Traemos citas y "unimos" (join) con la tabla cliente y recurso para saber nombres
+            const { data, error } = await supabase
+                .from("cita")
+                .select(
+                    `
           id_cita,
           fecha,
           hora,
@@ -44,218 +45,230 @@ export function Dashboard() {
           cliente ( nombre, apellido, telefono ),
           recurso ( nombre )
         `
-        )
-        .order("fecha", { ascending: true })
-        .order("hora", { ascending: true });
+                )
+                .order("fecha", { ascending: true })
+                .order("hora", { ascending: true });
 
-      if (error) throw error;
-      setTurnos(data);
-    } catch (error) {
-      alert("Error cargando turnos: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+            if (error) throw error;
+            setTurnos(data);
+        } catch (error) {
+            alert("Error cargando turnos: " + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  // 3. CERRAR SESIÓN
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
+    // 3. CERRAR SESIÓN
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        navigate("/login");
+    };
 
-  if (loading) return <div className="p-10 text-center">Cargando panel...</div>;
+    if (loading) return <div className="p-10 text-center">Cargando panel...</div>;
 
-  // FUNCIÓN 1: Actualizar Estado (Confirmar o Cancelar)
-  const handleUpdateStatus = async (id, nuevoEstado) => {
-    try {
-      const { error } = await supabase
-        .from("cita")
-        .update({ estado: nuevoEstado })
-        .eq("id_cita", id);
+    // FUNCIÓN 1: Actualizar Estado (Confirmar o Cancelar)
+    const handleUpdateStatus = async (id, nuevoEstado) => {
+        try {
+            const { error } = await supabase
+                .from("cita")
+                .update({ estado: nuevoEstado })
+                .eq("id_cita", id);
 
-      if (error) throw error;
+            if (error) throw error;
 
-      // Actualizamos la lista localmente para que se vea el cambio sin recargar
-      setTurnos(
-        turnos.map((turno) =>
-          turno.id_cita === id ? { ...turno, estado: nuevoEstado } : turno
-        )
-      );
-    } catch (error) {
-      alert("Error actualizando: " + error.message);
-    }
-  };
+            // Actualizamos la lista localmente para que se vea el cambio sin recargar
+            setTurnos(
+                turnos.map((turno) =>
+                    turno.id_cita === id ? { ...turno, estado: nuevoEstado } : turno
+                )
+            );
+        } catch (error) {
+            alert("Error actualizando: " + error.message);
+        }
+    };
 
-  // FUNCIÓN 2: Eliminar Cita
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Seguro que quieres eliminar este turno?")) return;
+    // FUNCIÓN 2: Eliminar Cita
+    const handleDelete = async (id) => {
+        if (!window.confirm("¿Seguro que quieres eliminar este turno?")) return;
 
-    try {
-      const { error } = await supabase.from("cita").delete().eq("id_cita", id);
+        try {
+            const { error } = await supabase.from("cita").delete().eq("id_cita", id);
 
-      if (error) throw error;
+            if (error) throw error;
 
-      // Quitamos el turno de la lista local
-      setTurnos(turnos.filter((turno) => turno.id_cita !== id));
-      toast.success("Turno eliminado con éxito.");
-    } catch (error) {
-      toast.error("Error eliminando: " + error.message);
-    }
-  };
+            // Quitamos el turno de la lista local
+            setTurnos(turnos.filter((turno) => turno.id_cita !== id));
+            toast.success("Turno eliminado con éxito.");
+        } catch (error) {
+            toast.error("Error eliminando: " + error.message);
+        }
+    };
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Navbar del Dashboard */}
-      <nav className="bg-white shadow p-4 flex justify-between items-center">
-        <h1 className="font-bold text-xl flex items-center gap-2">
-          <Calendar className="text-blue-600" /> Panel de Control
-        </h1>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 text-red-600 hover:bg-red-50 px-3 py-2 rounded transition"
-        >
-          <LogOut size={18} /> Cerrar Sesión
-        </button>
-      </nav>
+    return (
+      <div className="min-h-screen bg-gray-100">
+        {/* Navbar del Dashboard */}
+        <nav className="bg-white shadow p-4 flex justify-between items-center">
+          <h1 className="font-bold text-xl flex items-center gap-2">
+            <Calendar className="text-blue-600" /> Panel de Control
+          </h1>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-red-600 hover:bg-red-50 px-3 py-2 rounded transition"
+          >
+            <LogOut size={18} /> Cerrar Sesión
+          </button>
+        </nav>
 
-      {/* Contenido Principal */}
-      <main className="max-w-7xl mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-6">Próximos Turnos</h2>
+        {/* Contenido Principal */}
+        <main className="max-w-7xl mx-auto p-6">
+          <h2 className="text-2xl font-bold mb-6">Próximos Turnos</h2>
 
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Gestión de Turnos</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Gestión de Turnos</h2>
 
-          {/* Botones para cambiar vista */}
-          <div className="bg-white p-1 rounded-lg shadow border flex">
-            <button
-              onClick={() => setVista("tabla")}
-              className={`p-2 rounded flex items-center gap-2 ${
-                vista === "tabla"
-                  ? "bg-blue-100 text-blue-600"
-                  : "text-gray-500"
-              }`}
-            >
-              <List size={20} /> Lista
-            </button>
-            <button
-              onClick={() => setVista("calendario")}
-              className={`p-2 rounded flex items-center gap-2 ${
-                vista === "calendario"
-                  ? "bg-blue-100 text-blue-600"
-                  : "text-gray-500"
-              }`}
-            >
-              <LayoutGrid size={20} /> Calendario
-            </button>
+            {/* Botones para cambiar vista */}
+            <div className="bg-white p-1 rounded-lg shadow border flex">
+              <button
+                onClick={() => setVista("tabla")}
+                className={`p-2 rounded flex items-center gap-2 ${
+                  vista === "tabla"
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-500"
+                }`}
+              >
+                <List size={20} /> Lista
+              </button>
+              <button
+                onClick={() => setVista("calendario")}
+                className={`p-2 rounded flex items-center gap-2 ${
+                  vista === "calendario"
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-500"
+                }`}
+              >
+                <LayoutGrid size={20} /> Calendario
+              </button>
+              <button
+                onClick={() => setVista("config")}
+                className={`p-2 rounded flex items-center gap-2 ${
+                  vista === "config"
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-500"
+                }`}
+              >
+                <Settings size={20} /> Configuración
+              </button>
+            </div>
           </div>
-        </div>
 
-        {turnos.length === 0 ? (
-          <p className="text-gray-500">No hay turnos registrados.</p>
-        ) : (
-          <>
-            {vista === 'calendario' ? (
-              <AdminCalendar turnos={turnos} />
-            ) : (
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-700 uppercase text-xs">
-                <tr>
-                  <th className="p-4">Fecha/Hora</th>
-                  <th className="p-4">Cliente</th>
-                  <th className="p-4">Recurso</th>
-                  <th className="p-4">Estado</th>
-                  <th className="p-4">Estado</th>
-                  <th className="p-4 text-center">Acciones</th>{" "}
-                  {/* <--- NUEVA COLUMNA */}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {turnos.map((turno) => (
-                  <tr key={turno.id_cita} className="hover:bg-gray-50">
-                    <td className="p-4">
-                      <div className="font-medium">{turno.fecha}</div>
-                      <div className="text-sm text-gray-500">{turno.hora}</div>
-                    </td>
-                    <td className="p-4">
-                      <div className="font-medium">
-                        {turno.cliente.nombre} {turno.cliente.apellido}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {turno.cliente.telefono}
-                      </div>
-                    </td>
-                    <td className="p-4">{turno.recurso.nombre}</td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold
-                          ${
-                          turno.estado === "pendiente"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : ""
-                        }
-                        ${
-                          turno.estado === "confirmado"
+          {/* RENDERIZADO CONDICIONAL DE VISTAS */}
+
+          {vista === "config" ? (
+            // 1. VISTA CONFIGURACIÓN (Siempre visible)
+            <AdminConfig />
+          ) : turnos.length === 0 ? (
+            // 2. SIN DATOS (Solo si no estás en config)
+            <p className="text-gray-500 mt-4">No hay turnos registrados aún.</p>
+          ) : vista === "calendario" ? (
+            // 3. VISTA CALENDARIO
+            <AdminCalendar turnos={turnos} />
+          ) : (
+            // 4. VISTA TABLA (Por descarte, es la default)
+            <div className="bg-white rounded-lg shadow overflow-hidden mt-4">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 text-gray-700 uppercase text-xs">
+                  <tr>
+                    <th className="p-4">Fecha/Hora</th>
+                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Recurso</th>
+                    <th className="p-4">Estado</th>
+                    <th className="p-4 text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {turnos.map((turno) => (
+                    <tr key={turno.id_cita} className="hover:bg-gray-50">
+                      <td className="p-4">
+                        <div className="font-medium">{turno.fecha}</div>
+                        <div className="text-sm text-gray-500">
+                          {turno.hora}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-medium">
+                          {turno.cliente.nombre} {turno.cliente.apellido}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {turno.cliente.telefono}
+                        </div>
+                      </td>
+                      <td className="p-4">{turno.recurso.nombre}</td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold
+                      ${
+                        turno.estado === "pendiente"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : ""
+                      }
+                      ${
+                        turno.estado === "confirmado"
                           ? "bg-green-100 text-green-800"
                           : ""
-                        }
-                        `}
-                      >
-                        {turno.estado}
-                      </span>
-                      {/* <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ...`}
+                      }
+                      ${
+                        turno.estado === "cancelado"
+                          ? "bg-red-100 text-red-800"
+                          : ""
+                      }
+                    `}
                         >
-                        {turno.estado}
-                      </span> */}
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className="flex justify-center gap-2">
-                        {/* Botón Confirmar (Solo si está pendiente) */}
-                        {turno.estado === "pendiente" && (
-                          <button
-                          onClick={() =>
-                            handleUpdateStatus(turno.id_cita, "confirmado")
-                            }
-                            className="text-green-600 hover:text-green-800"
-                            title="Confirmar Turno"
+                          {turno.estado}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="flex justify-center gap-2">
+                          {/* Botón Confirmar */}
+                          {turno.estado === "pendiente" && (
+                            <button
+                              onClick={() =>
+                                handleUpdateStatus(turno.id_cita, "confirmado")
+                              }
+                              className="text-green-600 hover:text-green-800"
+                              title="Confirmar"
                             >
-                            <CheckCircle size={20} />
-                          </button>
-                        )}
-
-                        {/* Botón Cancelar (Si no está cancelado) */}
-                        {turno.estado !== "cancelado" && turno.estado !== "confirmado" && (
-                          <button
-                            onClick={() =>
-                              handleUpdateStatus(turno.id_cita, "cancelado")
-                            }
-                            className="text-yellow-600 hover:text-yellow-800"
-                            title="Cancelar Turno"
+                              <CheckCircle size={20} />
+                            </button>
+                          )}
+                          {/* Botón Cancelar */}
+                          {turno.estado !== "cancelado" && (
+                            <button
+                              onClick={() =>
+                                handleUpdateStatus(turno.id_cita, "cancelado")
+                              }
+                              className="text-yellow-600 hover:text-yellow-800"
+                              title="Cancelar"
                             >
-                            <XCircle size={20} />
-                          </button>
-                        )}
-
-                        {/* Botón Eliminar (Siempre visible) */}
-                        <button
-                          onClick={() => handleDelete(turno.id_cita)}
-                          className="text-red-600 hover:text-red-800"
-                          title="Eliminar registro"
+                              <XCircle size={20} />
+                            </button>
+                          )}
+                          {/* Botón Eliminar */}
+                          <button
+                            onClick={() => handleDelete(turno.id_cita)}
+                            className="text-red-600 hover:text-red-800"
+                            title="Eliminar"
                           >
-                          <Trash2 size={20} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-          </>
-        )}
-      </main>
-    </div>
-  );
+                            <Trash2 size={20} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </main>
+      </div>
+    );
 }

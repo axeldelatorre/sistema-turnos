@@ -30,7 +30,7 @@ export function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 relative">
       
-      {/* 3. BOTÓN DE VOLVER (Posicionado arriba a la izquierda) */}
+      {/* BOTÓN DE VOLVER AL INICIO */}
       <Link 
         to="/" 
         className="absolute top-6 left-6 flex items-center gap-2 text-gray-600 hover:text-blue-600 transition font-medium"

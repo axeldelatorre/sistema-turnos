@@ -1,25 +1,29 @@
-import { toast } from 'sonner';
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient.js";
-import { Calendar, Clock, User, Check } from "lucide-react";
+import { Calendar, User } from "lucide-react"; 
 import emailjs from "@emailjs/browser";
+import { toast } from "sonner";
 
 export function ReservaForm() {
   const [recursos, setRecursos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [horariosOcupados, setHorariosOcupados] = useState([]);
 
+  // Estado para guardar la regla de horario del día seleccionado
+  const [configuracionDia, setConfiguracionDia] = useState(null);
+  const [localLoading, setLocalLoading] = useState(false); // Para mostrar carga al elegir fecha
+
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
     telefono: "",
-    email: "", // Estado para el email
+    email: "",
     fecha: "",
     hora: "",
     recursoId: "",
   });
 
-  // Cargar Recursos
+  // 1. Cargar Recursos
   useEffect(() => {
     const fetchRecursos = async () => {
       const { data } = await supabase
@@ -31,7 +35,38 @@ export function ReservaForm() {
     fetchRecursos();
   }, []);
 
-  // Detectar cambios para buscar ocupados
+  // 2. Cuando cambia la FECHA, buscamos la configuración de ese día
+  useEffect(() => {
+    if (formData.fecha) {
+      fetchConfiguracionDia(formData.fecha);
+    }
+  }, [formData.fecha]);
+
+  const fetchConfiguracionDia = async (fechaStr) => {
+    setLocalLoading(true);
+    setFormData((prev) => ({ ...prev, hora: "" })); // Reseteamos la hora seleccionada
+
+    // Convertimos fecha string a objeto Date para saber el día de la semana (0-6)
+    // Agregamos 'T00:00' para evitar problemas de zona horaria al obtener el día
+    const dateObj = new Date(fechaStr + "T00:00:00");
+    const diaSemana = dateObj.getDay(); // 0 = Domingo, 1 = Lunes...
+
+    const { data, error } = await supabase
+      .from("horarios_laborales")
+      .select("*")
+      .eq("dia_semana", diaSemana)
+      .single();
+
+    if (error) {
+      console.error("Error buscando horario:", error);
+      toast.error("No pudimos verificar el horario de apertura.");
+    } else {
+      setConfiguracionDia(data);
+    }
+    setLocalLoading(false);
+  };
+
+  // 3. Buscar horarios OCUPADOS (Igual que antes)
   useEffect(() => {
     if (formData.fecha && formData.recursoId) {
       fetchHorariosOcupados();
@@ -54,23 +89,39 @@ export function ReservaForm() {
     }
   };
 
-  // Generador de Grilla
+  // 4. NUEVO: Generador Dinámico basado en BD
   const generarHorarios = () => {
-    const horarios = [];
-    let horaActual = 9;
-    let minutoActual = 0;
-    const horaCierre = 20;
+    if (!configuracionDia || !configuracionDia.activo) return [];
 
-    while (horaActual < horaCierre) {
-      const horaStr = horaActual.toString().padStart(2, "0");
-      const minStr = minutoActual.toString().padStart(2, "0");
+    const horarios = [];
+
+    // Parseamos hora apertura (ej: "09:00:00" -> 9)
+    const [inicioHora, inicioMin] = configuracionDia.apertura
+      .split(":")
+      .map(Number);
+    // Parseamos hora cierre (ej: "20:00:00" -> 20)
+    const [finHora, finMin] = configuracionDia.cierre.split(":").map(Number);
+
+    let horaActual = inicioHora;
+    let minutoActual = inicioMin;
+
+    // Convertimos todo a minutos para comparar fácil en el loop
+    // Ejemplo: 9:00 = 540 minutos
+    let minutosActuales = horaActual * 60 + minutoActual;
+    const minutosCierre = finHora * 60 + finMin;
+
+    while (minutosActuales < minutosCierre) {
+      // Reconvertir minutos a HH:MM
+      const h = Math.floor(minutosActuales / 60);
+      const m = minutosActuales % 60;
+
+      const horaStr = h.toString().padStart(2, "0");
+      const minStr = m.toString().padStart(2, "0");
+
       horarios.push(`${horaStr}:${minStr}`);
 
-      minutoActual += 30;
-      if (minutoActual === 60) {
-        minutoActual = 0;
-        horaActual += 1;
-      }
+      // Sumar 30 minutos
+      minutosActuales += 30;
     }
     return horarios;
   };
@@ -83,14 +134,13 @@ export function ReservaForm() {
     setFormData({ ...formData, hora: hora });
   };
 
-  // --- SUBMIT DEL FORMULARIO ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.hora){ return toast.error("Por favor selecciona un horario.")};
+    if (!formData.hora) return toast.error("Por favor selecciona un horario.");
     setLoading(true);
 
     try {
-      // Lógica de Cliente (Buscar o Crear)
+      // A. Cliente
       let clienteId;
       const { data: clienteExistente } = await supabase
         .from("cliente")
@@ -101,7 +151,6 @@ export function ReservaForm() {
       if (clienteExistente) {
         clienteId = clienteExistente.id_cliente;
       } else {
-        // Ahora guardamos el EMAIL también en la base de datos
         const { data: nuevoCliente, error: errCliente } = await supabase
           .from("cliente")
           .insert([
@@ -109,17 +158,16 @@ export function ReservaForm() {
               nombre: formData.nombre,
               apellido: formData.apellido,
               telefono: formData.telefono,
-              email: formData.email, // <--- Agregado
+              email: formData.email,
             },
           ])
           .select()
           .single();
-
         if (errCliente) throw errCliente;
         clienteId = nuevoCliente.id_cliente;
       }
 
-      // Insertar Cita
+      // B. Cita
       const { error } = await supabase.from("cita").insert([
         {
           fecha: formData.fecha,
@@ -133,7 +181,7 @@ export function ReservaForm() {
 
       if (error) throw error;
 
-      // Enviar Email (Solo si Supabase no falló)
+      // C. Email
       const recursoEncontrado = recursos.find(
         (r) => r.id_recurso == formData.recursoId
       );
@@ -147,32 +195,30 @@ export function ReservaForm() {
         hora: formData.hora,
         nombre_recurso: nombreDelRecurso,
         company_name: import.meta.env.VITE_COMPANY_NAME || "Estilo & Corte",
-
-        // Usamos el email que escribió el usuario para enviarle la confirmación
         email_destino: formData.email,
       };
 
       emailjs
         .send(
-          "service_44tpq7j", //  ID de EmailJS
-          "template_9j22lk8", //  ID de Template
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
           templateParams,
-          "XmOJn_bh2AOTzG25g" //  Public Key
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
         )
         .then(
-          (response) =>
-            console.log("Email enviado", response.status, response.text),
-          (err) => console.error("Fallo envío de email", err)
+          () => console.log("📧 Email enviado"),
+          (err) => console.error("❌ Fallo envío email", err)
         );
 
-      toast.success("✅ ¡Turno reservado con éxito!",{description:"Te hemos enviado un comprobante a tu correo."});
-
-      // Opcional: Limpiar formulario
+      toast.success("¡Turno reservado con éxito!", {
+        description: "Te esperamos.",
+      });
       setLoading(false);
+      setFormData({ ...formData, hora: "" }); // Limpiar hora
       fetchHorariosOcupados();
     } catch (error) {
-      console.error(error); // Bueno para debug
-      toast.error("Ocurrio un error al reservar.",{description: error.message});
+      console.error(error);
+      toast.error("Error al reservar: " + error.message);
       setLoading(false);
     }
   };
@@ -195,7 +241,7 @@ export function ReservaForm() {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* RECURSO */}
+        {/* Recurso */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Profesional
@@ -206,7 +252,7 @@ export function ReservaForm() {
               name="recursoId"
               onChange={handleChange}
               required
-              className="w-full pl-10 p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="w-full pl-10 p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="">-- Seleccionar --</option>
               {recursos.map((r) => (
@@ -218,7 +264,7 @@ export function ReservaForm() {
           </div>
         </div>
 
-        {/*CLIENTE */}
+        {/* Cliente */}
         <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
@@ -237,26 +283,24 @@ export function ReservaForm() {
             className="p-2.5 bg-gray-50 border rounded-lg"
           />
         </div>
-        <input
+        {/* <input
           type="tel"
           name="telefono"
           placeholder="Teléfono / WhatsApp"
           required
           onChange={handleChange}
           className="w-full p-2.5 bg-gray-50 border rounded-lg"
-        />
-
-        {/* Input de Email Agregado */}
+        /> */}
         <input
           type="email"
           name="email"
-          placeholder="Email (para enviarte el turno)"
+          placeholder="Email"
           required
           onChange={handleChange}
           className="w-full p-2.5 bg-gray-50 border rounded-lg"
         />
 
-        {/*FECHA */}
+        {/* Fecha */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Fecha del turno
@@ -271,51 +315,58 @@ export function ReservaForm() {
           />
         </div>
 
-        {/*GRILLA HORARIA */}
+        {/* GRILLA INTELIGENTE */}
         {formData.fecha && formData.recursoId && (
           <div className="animate-fade-in">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Horarios Disponibles{" "}
-              {formData.hora && (
-                <span className="text-blue-600 font-bold ml-2">
-                  Seleccionado: {formData.hora}hs
-                </span>
-              )}
-            </label>
+            {localLoading ? (
+              <p className="text-sm text-gray-500">Consultando horarios...</p>
+            ) : configuracionDia && !configuracionDia.activo ? (
+              <div className="p-4 bg-red-50 text-red-700 rounded-lg text-center font-medium">
+                ⛔ Lo sentimos, el local está cerrado este día.
+              </div>
+            ) : (
+              <>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Horarios Disponibles (
+                  {configuracionDia?.apertura?.slice(0, 5)} -{" "}
+                  {configuracionDia?.cierre?.slice(0, 5)})
+                  {formData.hora && (
+                    <span className="text-blue-600 font-bold ml-2">
+                      Seleccionado: {formData.hora}hs
+                    </span>
+                  )}
+                </label>
 
-            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-              {generarHorarios().map((hora) => {
-                const ocupado = horariosOcupados.includes(hora);
-                const pasado = esHorarioPasado(hora);
-                const deshabilitado = ocupado || pasado;
-                const seleccionado = formData.hora === hora;
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                  {generarHorarios().map((hora) => {
+                    const ocupado = horariosOcupados.includes(hora);
+                    const pasado = esHorarioPasado(hora);
+                    const deshabilitado = ocupado || pasado;
+                    const seleccionado = formData.hora === hora;
 
-                return (
-                  <button
-                    key={hora}
-                    type="button"
-                    disabled={deshabilitado}
-                    onClick={() => handleTimeSelect(hora)}
-                    className={`
-                      py-2 px-1 text-sm rounded-md transition border
-                      ${
-                        deshabilitado
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed border-transparent"
-                          : seleccionado
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-200"
-                          : "bg-white text-gray-700 border-gray-200 hover:border-blue-400 hover:text-blue-600"
-                      }
-                    `}
-                  >
-                    {hora}
-                  </button>
-                );
-              })}
-            </div>
-            {horariosOcupados.length > 0 && (
-              <p className="text-xs text-gray-400 mt-2">
-                * Los horarios en gris ya están reservados.
-              </p>
+                    return (
+                      <button
+                        key={hora}
+                        type="button"
+                        disabled={deshabilitado}
+                        onClick={() => handleTimeSelect(hora)}
+                        className={`
+                          py-2 px-1 text-sm rounded-md transition border
+                          ${
+                            deshabilitado
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed border-transparent"
+                              : seleccionado
+                              ? "bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-200"
+                              : "bg-white text-gray-700 border-gray-200 hover:border-blue-400 hover:text-blue-600"
+                          }
+                        `}
+                      >
+                        {hora}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         )}
@@ -323,7 +374,7 @@ export function ReservaForm() {
         <button
           type="submit"
           disabled={loading || !formData.hora}
-          className="w-full bg-blue-600 text-white p-3.5 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 font-medium shadow-lg shadow-blue-500/30"
+          className="w-full bg-blue-600 text-white p-3.5 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 font-medium shadow-lg"
         >
           {loading ? "Procesando..." : "Confirmar Reserva"}
         </button>

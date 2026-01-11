@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
-import { Servicios } from './pages/Servicios';
+// import { Servicios } from './pages/Servicios';
 
 function App() {
   return (
@@ -21,7 +21,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         
         {/* Ruta Privada: Los Servicios */}
-        <Route path="/servicios" element={<Servicios />} />
+        {/* <Route path="/servicios" element={<Servicios />} /> */}
       </Routes>
     </BrowserRouter>
   );
